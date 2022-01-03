@@ -1,6 +1,7 @@
 import argparse
 import commonutils
 import os
+import scipy.io.wavfile as wavfile
 
 if __name__ == "__main__":
     parser= argparse.ArgumentParser()
@@ -13,6 +14,7 @@ if __name__ == "__main__":
     for f in os.listdir(args.source):
         keyname = f.removesuffix(".wav")
         fullpath = f"{args.source}/{f}"
-        transform = commonutils.windowedFFT(fullpath,10,2)
+        fs_rate,signal = wavfile.read(fullpath)
+        transform = commonutils.windowedFFT(fs_rate,signal,10,2)
         with open(f"{args.dest}/{keyname}.fft","wb") as tmpfile:
             tmpfile.write(transform.tobytes())

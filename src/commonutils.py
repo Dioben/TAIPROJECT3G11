@@ -1,32 +1,29 @@
-import scipy.io.wavfile as wavfile
 import scipy
 import scipy.fftpack
 import numpy as np
 
-def windowedFFT(filename,windowSpanSeconds,overlapSeconds):
+def windowedFFT(fs_rate,signal,windowSpanSeconds,overlapSeconds):
     #returns concatenation of n-dimensional ffts
-    fs_rate, signal_original = wavfile.read(filename)
     #calculate actual window spans
     windowSpanIndexes =  int(windowSpanSeconds*fs_rate)
     overlapIndexes = int(overlapSeconds*fs_rate)
     
     #start iterating windows
-    data = signal_original[:windowSpanIndexes]
+    data = signal[:windowSpanIndexes]
     currentOffset = windowSpanIndexes
     transforms = np.empty((0,2))
     while True:
         #scipy includes n-dimensional FFT so there is no need to consider how many channels we're using
         transforms = np.append(transforms, abs(scipy.fftpack.fftn(data)) ,axis=0)
-        if currentOffset>=len(signal_original):
+        if currentOffset>=len(signal):
             break
-        data = np.concatenate((data[:overlapIndexes],signal_original[currentOffset:currentOffset+windowSpanIndexes-overlapIndexes]))
+        data = np.concatenate((data[:overlapIndexes],signal[currentOffset:currentOffset+windowSpanIndexes-overlapIndexes]))
         currentOffset+= windowSpanIndexes-overlapIndexes
     return transforms    
 
 
-def applyNoise(filename,deviationCoefficient=0.0005):
-    fs_rate, signal_original = wavfile.read(filename)
-    signal_type = signal_original.dtype
+def applyNoise(signal,deviationCoefficient=0.0005):
+    signal_type = signal.dtype
     #how much distortion can we apply?
     if signal_type == np.int16:
         dev = 2**15 *deviationCoefficient
@@ -43,4 +40,9 @@ def applyNoise(filename,deviationCoefficient=0.0005):
     else:
         raise Exception(f"Unknown signal type {signal_type}")
 
-    return fs_rate,signal_original+np.random.normal(0,dev,signal_original.shape) # add 0-centered noise to the original signal
+    return signal+np.random.normal(0,dev,signal.shape) # add 0-centered noise to the original signal
+
+def sliceFileAtSeconds(fs_rate,signal,start,duration):
+    windowSpan =  int(duration*fs_rate)
+    windowOffset = int(start*fs_rate)
+    return signal[windowOffset:windowOffset+windowSpan]
