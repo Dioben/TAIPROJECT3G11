@@ -46,3 +46,12 @@ def sliceFileAtSeconds(fs_rate,signal,start,duration):
     windowSpan =  int(duration*fs_rate)
     windowOffset = int(start*fs_rate)
     return signal[windowOffset:windowOffset+windowSpan]
+
+
+def calculateDistance(sample1,sample2,compressFunc):
+    cs1 = compressFunc(sample1)
+    cs2 = compressFunc(sample2)
+    jointcompress = compressFunc(sample1+sample2)
+    denominator = max(len(cs1),len(cs2))
+    numerator = len(jointcompress) - min(len(cs1),len(cs2))
+    return numerator/denominator

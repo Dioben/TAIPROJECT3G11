@@ -1,5 +1,5 @@
 import argparse
-import commonutils
+from commonutils import *
 import os
 import scipy.io.wavfile as wavfile
 import random
@@ -26,6 +26,6 @@ if __name__ == "__main__":
             startpoint = random.randint(0,length-args.max_length)
             duration = random.random(args.max_length-args.min_length)+args.min_length
             
-            cut = commonutils.sliceFileAtSeconds(fs_rate,track,startpoint,duration)
-            noise = commonutils.applyNoise(cut,args.noise)
+            cut = sliceFileAtSeconds(fs_rate,track,startpoint,duration)
+            noise = applyNoise(cut,args.noise)
             wavfile.write(f"{args.dest}/{keyname}{iter}.wav",fs_rate,noise)
