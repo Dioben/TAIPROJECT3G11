@@ -2,6 +2,7 @@ import argparse
 from commonutils import *
 import os
 import scipy.io.wavfile as wavfile
+import subprocess
 
 if __name__ == "__main__":
     parser= argparse.ArgumentParser()
@@ -25,9 +26,9 @@ if __name__ == "__main__":
         raise Exception("Unknown compression algorithm")
 
 
-
-    freq,track = wavfile.read(args.sample)
-    trans = windowedFFT(freq,track,args.window_size,args.window_overlap).tobytes()
+    with open(args.sample, "rb") as f:
+        trans = f.read()
+    
     
     results = {}
 
