@@ -1,7 +1,4 @@
-import scipy
-import scipy.fftpack
 import numpy as np
-
 
 def applyNoise(signal,deviationCoefficient=0.0005):
     signal_type = signal.dtype

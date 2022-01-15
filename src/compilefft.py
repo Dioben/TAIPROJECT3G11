@@ -1,7 +1,6 @@
 import argparse
 from commonutils import *
 import os
-import scipy.io.wavfile as wavfile
 import subprocess
 
 if __name__ == "__main__":

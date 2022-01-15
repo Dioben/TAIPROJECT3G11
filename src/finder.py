@@ -1,8 +1,6 @@
 import argparse
 from commonutils import *
 import os
-import scipy.io.wavfile as wavfile
-import subprocess
 
 if __name__ == "__main__":
     parser= argparse.ArgumentParser()
@@ -25,10 +23,8 @@ if __name__ == "__main__":
     else:
         raise Exception("Unknown compression algorithm")
 
-
     with open(args.sample, "rb") as f:
         trans = f.read()
-    
     
     results = {}
 
