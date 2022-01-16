@@ -1,6 +1,8 @@
 import numpy as np
 
 def applyNoise(signal,deviationCoefficient=0.0005):
+    if deviationCoefficient <= 0:
+        return signal
     signal_type = signal.dtype
     #how much distortion can we apply?
     if signal_type == np.int16:
