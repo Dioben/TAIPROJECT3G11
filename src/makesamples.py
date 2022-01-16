@@ -28,4 +28,4 @@ if __name__ == "__main__":
             
             cut = sliceFileAtSeconds(fs_rate,track,startpoint,duration)
             noise = applyNoise(cut,args.noise)
-            wavfile.write(f"{args.dest}/{keyname}{iter}.wav",fs_rate,cut)
+            wavfile.write(f"{args.dest}/{keyname}{iter}.wav",fs_rate,noise)
