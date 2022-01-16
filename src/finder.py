@@ -23,7 +23,13 @@ if __name__ == "__main__":
     else:
         raise Exception("Unknown compression algorithm")
 
-    with open(args.sample, "rb") as f:
+    tempfilename = "./tempfile"
+    while os.path.exists(f"{tempfilename}.freqs"):
+        tempfilename+="1"
+    tempfilename+=".freqs"
+
+    cmd = ["./GetMaxFreqs", "-w", tempfilename, args.sample]
+    with open(tempfilename, "rb") as f:
         trans = f.read()
     
     results = {}
@@ -35,6 +41,9 @@ if __name__ == "__main__":
             modelbytes = tmpfile.read()
         results[keyname] = calculateDistance(trans,modelbytes,compress)
     
+    if os.path.exists(tempfilename):
+        os.path.delete(tempfilename)
+
     print("Ranked choices (top 10):")
     keys = sorted(results.keys(),key=lambda x:results[x])[:10]
     for x in keys:
