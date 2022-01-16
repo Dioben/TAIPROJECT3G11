@@ -1,6 +1,7 @@
 import argparse
 from commonutils import *
 import os
+import subprocess
 
 if __name__ == "__main__":
     parser= argparse.ArgumentParser()
@@ -24,11 +25,14 @@ if __name__ == "__main__":
         raise Exception("Unknown compression algorithm")
 
     tempfilename = "./tempfile"
-    while os.path.exists(f"{tempfilename}.freqs"):
-        tempfilename+="1"
-    tempfilename+=".freqs"
+    tempfilenum = 0
+    while os.path.exists(f"{tempfilename+str(tempfilenum)}.freqs"):
+        tempfilenum+=1
+    tempfilename+=str(tempfilenum)+".freqs"
 
     cmd = ["./GetMaxFreqs", "-w", tempfilename, args.sample]
+    popen = subprocess.Popen(cmd)
+    popen.wait()
     with open(tempfilename, "rb") as f:
         trans = f.read()
     
@@ -42,7 +46,7 @@ if __name__ == "__main__":
         results[keyname] = calculateDistance(trans,modelbytes,compress)
     
     if os.path.exists(tempfilename):
-        os.path.delete(tempfilename)
+        os.remove(tempfilename)
 
     print("Ranked choices (top 10):")
     keys = sorted(results.keys(),key=lambda x:results[x])[:10]
