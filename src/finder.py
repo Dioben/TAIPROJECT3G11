@@ -1,7 +1,7 @@
 import argparse
 from commonutils import *
 import os
-import scipy.io.wavfile as wavfile
+import subprocess
 
 if __name__ == "__main__":
     parser= argparse.ArgumentParser()
@@ -24,10 +24,17 @@ if __name__ == "__main__":
     else:
         raise Exception("Unknown compression algorithm")
 
+    tempfilename = "./tempfile"
+    tempfilenum = 0
+    while os.path.exists(f"{tempfilename+str(tempfilenum)}.freqs"):
+        tempfilenum+=1
+    tempfilename+=str(tempfilenum)+".freqs"
 
-
-    freq,track = wavfile.read(args.sample)
-    trans = windowedFFT(freq,track,args.window_size,args.window_overlap).tobytes()
+    cmd = ["./GetMaxFreqs", "-w", tempfilename, args.sample]
+    popen = subprocess.Popen(cmd)
+    popen.wait()
+    with open(tempfilename, "rb") as f:
+        trans = f.read()
     
     results = {}
 
@@ -38,6 +45,9 @@ if __name__ == "__main__":
             modelbytes = tmpfile.read()
         results[keyname] = calculateDistance(trans,modelbytes,compress)
     
+    if os.path.exists(tempfilename):
+        os.remove(tempfilename)
+
     print("Ranked choices (top 10):")
     keys = sorted(results.keys(),key=lambda x:results[x])[:10]
     for x in keys:

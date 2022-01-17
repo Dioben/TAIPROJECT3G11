@@ -5,6 +5,8 @@ __pycache__/
 
 src/sample*
 sample*
+src/db*
+music*
 # C extensions
 *.so
 
