@@ -11,9 +11,41 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
 from PyQt5.QtWidgets import QFileDialog,QTableWidgetItem
 import os
-import threading
 import subprocess
 from commonutils import calculateDistance
+
+class ConvertThread(QtCore.QThread):
+    progress = QtCore.pyqtSignal(object)
+
+    def __init__(self, filename,db,tempfile,cp):
+        QtCore.QThread.__init__(self)
+        self.filename = filename
+        self.db = db
+        self.tempfilename = tempfile
+        self.compress = cp
+
+    def run(self):
+        cmd = ["./GetMaxFreqs", "-w", self.tempfilename, self.filename]
+        popen = subprocess.Popen(cmd)
+        popen.wait()
+        with open(self.tempfilename, "rb") as f:
+            trans = f.read()
+        results = []
+        filelist = os.listdir(self.db)
+        totalfiles = len(filelist)
+        counter = 0
+        for f in filelist:
+            keyname = f.removesuffix(".freqs")
+            fullpath = f"{self.db}/{f}"
+            with open(fullpath,"rb") as tmpfile:
+                modelbytes = tmpfile.read()
+            results.append( (keyname, calculateDistance(trans,modelbytes,self.compress) ))
+            counter+=1
+            prog = counter/totalfiles*100
+            results  = sorted(results,key=lambda x: x[1])[:10]
+            self.progress.emit( {"percent":prog,"results":results} )
+        
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow,comp,db,cache): #caching is not implemented yet
@@ -24,7 +56,6 @@ class Ui_MainWindow(object):
         while os.path.exists(f"{self.tempfilename}{tempfilenum}.freqs"):
             tempfilenum+=1
         self.tempfilename+=str(tempfilenum)+".freqs"
-        self.running = False
         self.compress = comp
         self.db = db
 
@@ -141,6 +172,7 @@ class Ui_MainWindow(object):
         self.cancel.clicked.connect(self.cancelThreadVisualReset)
         self.tableWidget_2.setHorizontalHeaderLabels(["File","Distance"])
         self.submitbutton.clicked.connect(self.fileSelectPress)
+        self.workThread = None
         
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -166,14 +198,10 @@ class Ui_MainWindow(object):
         files = [u.url() for u in event.mimeData().urls()]
         if len(files)!=1:
             self.filename_label.setText("1 file at a time please")
+            return
         filename = files[0]
         filename = filename[6:]
-        self.filename_label.setText(f"Processing results for {filename.split('/')[-1]}")
-        self.progressBarContainer.setVisible(True)
-        self.progressBar.setValue(0)
-        self.frame.setVisible(False)
-        self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 469))
-        threading.Thread(target=self.processFile,args=(filename,),daemon=True).start()
+        self.processFile(filename)
         
 
     def dragEnterEvent(self,event):
@@ -188,7 +216,10 @@ class Ui_MainWindow(object):
         self.frame.setStyleSheet("")
         event.ignore()
 
-    def fillTable(self,list):
+    def processUpdate(self,results):
+        percent = results["percent"]
+        self.progressBar.setValue(percent)
+        list = results["results"]
         self.tableWidget_2.setRowCount(0)
         self.tableWidget_2.setRowCount(len(list))
         for idx,x in enumerate(list):
@@ -196,41 +227,24 @@ class Ui_MainWindow(object):
             self.tableWidget_2.setItem(idx,1,QTableWidgetItem( str(round(x[1],6))) )
 
     def processFile(self,filename):
-        self.running = True
-        cmd = ["./GetMaxFreqs", "-w", self.tempfilename, filename]
-        popen = subprocess.Popen(cmd)
-        popen.wait()
-        if not self.running:
-            return
-        with open(self.tempfilename, "rb") as f:
-            trans = f.read()
-        if not self.running:
-            return
-        results = []
-        filelist = os.listdir(self.db)
-        totalfiles = len(filelist)
-        counter = 0
-        for f in filelist:
-            keyname = f.removesuffix(".fft")
-            fullpath = f"{self.db}/{f}"
-            with open(fullpath,"rb") as tmpfile:
-                modelbytes = tmpfile.read()
-            results.append( (keyname, calculateDistance(trans,modelbytes,self.compress) ))
-            counter+=1
-            self.progressBar.setValue(counter/totalfiles*100)
-            if not self.running:
-                return
-            results  = sorted(results,key=lambda x: x[1])[:10]
-            self.fillTable(results)
-        
-        self.filename_label.setText(f"Results for {filename.split('/')[-1]}")
-        self.progressBarContainer.setVisible(False)
-        self.frame.setVisible(True)
-        self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 259))
-        return
+        self.filename_label.setText(f"Processing results for {filename.split('/')[-1]}")
+        self.progressBarContainer.setVisible(True)
+        self.progressBar.setValue(0)
+        self.frame.setVisible(False)
+        self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 469))
 
-    def cancelThreadVisualReset(self):
-        self.running = False
+        self.workThread = ConvertThread(filename,self.db,self.tempfilename,self.compress)
+        self.workThread.progress.connect(self.processUpdate())
+        self.workThread.finished.connect(self.resetVisuals)
+        self.workThread.start()
+        
+
+    def cancelThread(self):
+        self.workThread.quit()
+        self.workThread.wait()
+       
+    def resetVisuals(self):
+        self.filename_label.setText("Processing Finished")
         self.progressBarContainer.setVisible(False)
         self.frame.setVisible(True)
         self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 259))
@@ -240,9 +254,4 @@ class Ui_MainWindow(object):
         file , check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
                                                "Select Sound Source", "All Files (*);;Wav Files (*.wav)")
         if check:
-            self.filename_label.setText(f"Processing results for {file.split('/')[-1]}")
-            self.progressBarContainer.setVisible(True)
-            self.progressBar.setValue(0)
-            self.frame.setVisible(False)
-            self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 469))
-            threading.Thread(target=self.processFile,args=(file,),daemon=True).start()
+            self.processFile(file)
