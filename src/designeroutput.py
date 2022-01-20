@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog
+from PyQt5.QtWidgets import QFileDialog,QTableWidgetItem
 import os
 import threading
 import subprocess
@@ -139,7 +139,7 @@ class Ui_MainWindow(object):
         self.frame.dragEnterEvent = lambda s: self.frameEnterEvent(s)
         self.frame.dropEvent = lambda s: self.frameDropEvent(s)
         self.cancel.clicked.connect(self.cancelThreadVisualReset)
-        self.tableWidget_2.setHorizontalHeaderLabels(["File","Similarity"])
+        self.tableWidget_2.setHorizontalHeaderLabels(["File","Distance"])
         self.submitbutton.clicked.connect(self.fileSelectPress)
         
         self.retranslateUi(MainWindow)
@@ -192,8 +192,8 @@ class Ui_MainWindow(object):
         self.tableWidget_2.setRowCount(0)
         self.tableWidget_2.setRowCount(len(list))
         for idx,x in enumerate(list):
-            self.tableWidget_2.setItem(idx,0,x[0])
-            self.tableWidget_2.setItem(idx,1,x[1])
+            self.tableWidget_2.setItem(idx,0,QTableWidgetItem(x[0]))
+            self.tableWidget_2.setItem(idx,1,QTableWidgetItem(round(x[1],6)))
 
     def processFile(self,filename):
         self.running = True
@@ -220,7 +220,7 @@ class Ui_MainWindow(object):
             self.progressBar.setValue(counter/totalfiles*100)
             if not self.running:
                 return
-            results  = sorted(results,key=lambda x: x[1],reverse=True)[:10]
+            results  = sorted(results,key=lambda x: x[1])[:10]
             self.fillTable(results)
         
         self.filename_label.setText(f"Results for {filename.split('/')[-1]}")
