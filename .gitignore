@@ -9,7 +9,7 @@ src/db*
 music*
 # C extensions
 *.so
-
+tempfile*
 # Distribution / packaging
 .Python
 build/
