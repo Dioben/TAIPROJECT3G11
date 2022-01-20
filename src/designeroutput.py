@@ -234,7 +234,7 @@ class Ui_MainWindow(object):
         self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 469))
 
         self.workThread = ConvertThread(filename,self.db,self.tempfilename,self.compress)
-        self.workThread.progress.connect(self.processUpdate())
+        self.workThread.progress.connect(self.processUpdate)
         self.workThread.finished.connect(self.resetVisuals)
         self.workThread.start()
         
