@@ -26,7 +26,6 @@ class Ui_MainWindow(object):
         self.running = False
         self.compress = comp
         self.db = db
-        print("compress ",self.compress)
 
 
 
@@ -126,8 +125,8 @@ class Ui_MainWindow(object):
         self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 259))
         self.tableWidget_2.setMinimumSize(QtCore.QSize(0, 200))
         self.tableWidget_2.setObjectName("tableWidget_2")
-        self.tableWidget_2.setColumnCount(0)
-        self.tableWidget_2.setRowCount(0)
+        self.tableWidget_2.setColumnCount(2)
+        self.tableWidget_2.setRowCount(10)
         self.horizontalLayout_13.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -139,6 +138,7 @@ class Ui_MainWindow(object):
         self.frame.dragEnterEvent = lambda s: self.frameEnterEvent(s)
         self.frame.dropEvent = lambda s: self.frameDropEvent(s)
         self.cancel.clicked.connect(self.cancelThreadVisualReset)
+        self.tableWidget_2.setHorizontalHeaderLabels(["File","Similarity"])
         
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -165,6 +165,8 @@ class Ui_MainWindow(object):
         if len(files)!=1:
             self.filename_label.setText("1 file at a time please")
         filename = files[0]
+        filename = filename[6:]
+        self.filename_label.setText(f"Processing results for {filename.split('/')[-1]}")
         self.progressBarContainer.setVisible(True)
         self.progressBar.setValue(0)
         self.frame.setVisible(False)
@@ -184,6 +186,12 @@ class Ui_MainWindow(object):
         self.frame.setStyleSheet("")
         event.ignore()
 
+    def fillTable(self,list):
+        self.tableWidget_2.setRowCount(0)
+        self.tableWidget_2.setRowCount(10)
+        for idx,x in enumerate(list):
+            self.tableWidget_2.setItem(idx,0,x[0])
+            self.tableWidget_2.setItem(idx,1,x[1])
 
     def processFile(self,filename):
         self.running = True
@@ -196,7 +204,7 @@ class Ui_MainWindow(object):
             trans = f.read()
         if not self.running:
             return
-        results = {}
+        results = []
         filelist = os.listdir(self.db)
         totalfiles = len(filelist)
         counter = 0
@@ -205,14 +213,19 @@ class Ui_MainWindow(object):
             fullpath = f"{self.db}/{f}"
             with open(fullpath,"rb") as tmpfile:
                 modelbytes = tmpfile.read()
-            results[keyname] = calculateDistance(trans,modelbytes,self.compress)
-
+            results.append(keyname, calculateDistance(trans,modelbytes,self.compress))
             counter+=1
             self.progressBar.setValue(counter/totalfiles*100)
             if not self.running:
                 return
+            results  = sorted(results,key=lambda x: x[1],reverse=True)[:10]
+            self.fillTable(results)
         
-        #TODO: Visual Feedback when done
+        self.filename_label.setText(f"Results for {filename.split('/')[-1]}")
+        self.progressBarContainer.setVisible(False)
+        self.frame.setVisible(True)
+        self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 259))
+        return
 
     def cancelThreadVisualReset(self):
         self.running = False
