@@ -9,6 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
+from PyQt5.QtWidgets import QFileDialog
 import os
 import threading
 import subprocess
@@ -126,7 +127,7 @@ class Ui_MainWindow(object):
         self.tableWidget_2.setMinimumSize(QtCore.QSize(0, 200))
         self.tableWidget_2.setObjectName("tableWidget_2")
         self.tableWidget_2.setColumnCount(2)
-        self.tableWidget_2.setRowCount(10)
+        self.tableWidget_2.setRowCount(0)
         self.horizontalLayout_13.addWidget(self.splitter)
         MainWindow.setCentralWidget(self.centralwidget)
         self.statusbar = QtWidgets.QStatusBar(MainWindow)
@@ -139,6 +140,7 @@ class Ui_MainWindow(object):
         self.frame.dropEvent = lambda s: self.frameDropEvent(s)
         self.cancel.clicked.connect(self.cancelThreadVisualReset)
         self.tableWidget_2.setHorizontalHeaderLabels(["File","Similarity"])
+        self.submitbutton.clicked.connect(self.fileSelectPress)
         
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -188,7 +190,7 @@ class Ui_MainWindow(object):
 
     def fillTable(self,list):
         self.tableWidget_2.setRowCount(0)
-        self.tableWidget_2.setRowCount(10)
+        self.tableWidget_2.setRowCount(len(list))
         for idx,x in enumerate(list):
             self.tableWidget_2.setItem(idx,0,x[0])
             self.tableWidget_2.setItem(idx,1,x[1])
@@ -213,7 +215,7 @@ class Ui_MainWindow(object):
             fullpath = f"{self.db}/{f}"
             with open(fullpath,"rb") as tmpfile:
                 modelbytes = tmpfile.read()
-            results.append(keyname, calculateDistance(trans,modelbytes,self.compress))
+            results.append( (keyname, calculateDistance(trans,modelbytes,self.compress) ))
             counter+=1
             self.progressBar.setValue(counter/totalfiles*100)
             if not self.running:
@@ -232,3 +234,15 @@ class Ui_MainWindow(object):
         self.progressBarContainer.setVisible(False)
         self.frame.setVisible(True)
         self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 259))
+
+
+    def fileSelectPress(self):
+        file , check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
+                                               "Select Sound Source", "All Files (*);;Wav Files (*.wav)")
+        if check:
+            self.filename_label.setText(f"Processing results for {file.split('/')[-1]}")
+            self.progressBarContainer.setVisible(True)
+            self.progressBar.setValue(0)
+            self.frame.setVisible(False)
+            self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 469))
+            threading.Thread(target=self.processFile,args=(file,),daemon=True).start()
