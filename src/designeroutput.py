@@ -166,6 +166,7 @@ class Ui_MainWindow(object):
         MainWindow.setStatusBar(self.statusbar)
         
         #custom code stuff
+        self.frame_2.resizeEvent = self.tableFrameResizeEvent
         self.progressBarContainer.setVisible(False)
         self.frame.dragEnterEvent = lambda s: self.frameEnterEvent(s)
         self.frame.dropEvent = lambda s: self.frameDropEvent(s)
@@ -231,7 +232,7 @@ class Ui_MainWindow(object):
         self.progressBarContainer.setVisible(True)
         self.progressBar.setValue(0)
         self.frame.setVisible(False)
-        self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 469))
+        
 
         self.workThread = ConvertThread(filename,self.db,self.tempfilename,self.compress)
         self.workThread.progress.connect(self.processUpdate)
@@ -247,7 +248,6 @@ class Ui_MainWindow(object):
         self.filename_label.setText("Processing Finished")
         self.progressBarContainer.setVisible(False)
         self.frame.setVisible(True)
-        self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, 751, 259))
 
 
     def fileSelectPress(self):
@@ -255,3 +255,8 @@ class Ui_MainWindow(object):
                                                "Select Sound Source", "All Files (*);;Wav Files (*.wav)")
         if check:
             self.processFile(file)
+
+    def tableFrameResizeEvent(self,event):
+        width = self.frame_2.frameGeometry().width()
+        height = self.frame_2.frameGeometry().height()
+        self.tableWidget_2.setGeometry(QtCore.QRect(0, 0, width, height))
