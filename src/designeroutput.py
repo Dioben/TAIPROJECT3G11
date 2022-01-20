@@ -193,7 +193,7 @@ class Ui_MainWindow(object):
         self.tableWidget_2.setRowCount(len(list))
         for idx,x in enumerate(list):
             self.tableWidget_2.setItem(idx,0,QTableWidgetItem(x[0]))
-            self.tableWidget_2.setItem(idx,1,QTableWidgetItem(round(x[1],6)))
+            self.tableWidget_2.setItem(idx,1,QTableWidgetItem( str(round(x[1],6))) )
 
     def processFile(self,filename):
         self.running = True
