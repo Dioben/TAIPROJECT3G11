@@ -26,7 +26,7 @@ if __name__ == "__main__":
 
     tempfilename = "./tempfile"
     tempfilenum = 0
-    while os.path.exists(f"{tempfilename+str(tempfilenum)}.freqs"):
+    while os.path.exists(f"{tempfilename}{tempfilenum}.freqs"):
         tempfilenum+=1
     tempfilename+=str(tempfilenum)+".freqs"
 
