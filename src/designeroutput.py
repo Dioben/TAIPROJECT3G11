@@ -169,7 +169,7 @@ class Ui_MainWindow(object):
         self.progressBarContainer.setVisible(False)
         self.frame.dragEnterEvent = lambda s: self.frameEnterEvent(s)
         self.frame.dropEvent = lambda s: self.frameDropEvent(s)
-        self.cancel.clicked.connect(self.cancelThreadVisualReset)
+        self.cancel.clicked.connect(self.cancelThread)
         self.tableWidget_2.setHorizontalHeaderLabels(["File","Distance"])
         self.submitbutton.clicked.connect(self.fileSelectPress)
         self.workThread = None
