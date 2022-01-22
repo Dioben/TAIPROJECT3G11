@@ -11,7 +11,7 @@ if __name__ == "__main__":
     parser.add_argument("--min-length",help="Minimum sample length in seconds", type=float, default=5.0)
     parser.add_argument("--max-length",help="Maximum sample length in seconds", type=float, default=15.0)
     parser.add_argument("--samples-per-track",help="Samples obtained for each track" ,type=int,default=10)
-    parser.add_argument("--noise",help="noise coefficient, values smaller than .01 recommended", type=float, default=0.0005)
+    parser.add_argument("--noise",help="noise coefficient, values smaller than .01 recommended", type=float, default=0.01)
     args = parser.parse_args()
 
     os.makedirs(os.path.dirname(f"{args.dest}/"), exist_ok=True)
