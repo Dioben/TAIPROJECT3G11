@@ -1,6 +1,6 @@
 import numpy as np
 
-def applyNoise(signal,deviationCoefficient=0.0005):
+def applyNoise(signal,deviationCoefficient=0.01):
     if deviationCoefficient <= 0:
         return signal
     signal_type = signal.dtype
@@ -19,8 +19,7 @@ def applyNoise(signal,deviationCoefficient=0.0005):
         dev = 1*deviationCoefficient
     else:
         raise Exception(f"Unknown signal type {signal_type}")
-
-    return signal+np.random.normal(0,dev,signal.shape) # add 0-centered noise to the original signal
+    return np.add(signal,np.random.normal(0,dev,signal.shape),casting="unsafe",dtype=signal_type) # add 0-centered noise to the original signal
 
 
 def sliceFileAtSeconds(fs_rate,signal,start,duration):
