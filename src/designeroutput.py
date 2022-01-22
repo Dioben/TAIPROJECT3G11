@@ -9,7 +9,7 @@
 
 
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QFileDialog,QTableWidgetItem
+from PyQt5.QtWidgets import QFileDialog,QTableWidgetItem,QMainWindow
 import os
 import subprocess
 from commonutils import calculateDistance
@@ -53,6 +53,16 @@ class ConvertThread(QtCore.QThread):
         
 
 class Ui_MainWindow(object):
+    
+    def closeEvent(self, event):
+        # here you can terminate your threads and do other stuff
+        if self.workThread:
+            self.workThread.exit()
+        if os.path.exists(self.tempfilename):
+            os.remove(self.tempfilename)
+        # and afterwards call the closeEvent of the super-class
+        super(QMainWindow, self).closeEvent(event)
+        
     def setupUi(self, MainWindow,comp,db,cache): #caching is not implemented yet
 
         #state management
@@ -249,6 +259,7 @@ class Ui_MainWindow(object):
         
 
     def cancelThread(self):
+        self.filename_label.setText("Processing Cancelled")
         self.workThread.quit()
         self.workThread.wait()
        
