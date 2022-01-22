@@ -7,8 +7,6 @@ if __name__ == "__main__":
     parser= argparse.ArgumentParser()
     parser.add_argument("--sample",help="File containing unknown sound", required=True)
     parser.add_argument("--db",help="Folder with known songs", required=True)
-    parser.add_argument("--window-size",help="FFT window size in seconds",type=float,default=10.0)
-    parser.add_argument("--window-overlap",help="FFT window overlap with last sample in seconds",type=float,default=2.0)
     parser.set_defaults(algorithm="gzip")
     parser.add_argument("--gzip",dest="algorithm",action="store_const",const="gzip")
     parser.add_argument("--lzma",dest="algorithm",action="store_const",const="lzma")
@@ -37,9 +35,10 @@ if __name__ == "__main__":
         trans = f.read()
     
     results = {}
-
-    for f in os.listdir(args.db):
-        keyname = f.removesuffix(".fft")
+    filelist = os.listdir(args.db)
+    filelist = [ f for f in filelist if not os.path.isdir(f"{args.db}/{f}")] # remove dirs from consideration
+    for f in filelist:
+        keyname = f.removesuffix(".freqs")
         fullpath = f"{args.db}/{f}"
         with open(fullpath,"rb") as tmpfile:
             modelbytes = tmpfile.read()
