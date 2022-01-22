@@ -28,8 +28,12 @@ class ConvertThread(QtCore.QThread):
         cmd = ["./GetMaxFreqs", "-w", self.tempfilename, self.filename]
         popen = subprocess.Popen(cmd)
         popen.wait()
-        with open(self.tempfilename, "rb") as f:
-            trans = f.read()
+        try:
+            with open(self.tempfilename, "rb") as f:
+                trans = f.read()
+        except:
+            self.progress.emit({"title":f"Failed to process {self.filename}"})
+            return
         results = []
         filelist = os.listdir(self.db)
         totalfiles = len(filelist)
@@ -44,8 +48,9 @@ class ConvertThread(QtCore.QThread):
             prog = counter/totalfiles*100
             results  = sorted(results,key=lambda x: x[1])[:10]
             self.progress.emit( {"percent":prog,"results":results} )
+            self.progress.emit({"title":f"Finished Processing {self.filename}"})
         
-
+        
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow,comp,db,cache): #caching is not implemented yet
@@ -218,6 +223,9 @@ class Ui_MainWindow(object):
         event.ignore()
 
     def processUpdate(self,results):
+        if "title" in results: #this is just a title setting message
+            self.filename_label.setText(results["title"])
+            return
         percent = results["percent"]
         self.progressBar.setValue(percent)
         list = results["results"]
@@ -245,14 +253,13 @@ class Ui_MainWindow(object):
         self.workThread.wait()
        
     def resetVisuals(self):
-        self.filename_label.setText("Processing Finished")
         self.progressBarContainer.setVisible(False)
         self.frame.setVisible(True)
 
 
     def fileSelectPress(self):
-        file , check = QFileDialog.getOpenFileName(None, "QFileDialog.getOpenFileName()",
-                                               "Select Sound Source", "All Files (*);;Wav Files (*.wav)")
+        file , check = QFileDialog.getOpenFileName(None, "Select an audio file",
+                                               "", "All Files (*);;Wav Files (*.wav);;Flac Files (*.flac)")
         if check:
             self.processFile(file)
 
