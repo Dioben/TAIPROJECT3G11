@@ -5,7 +5,7 @@ import scipy.io.wavfile as wavfile
 import random
 
 
-def main(args, full=False):
+def main(args, fraction=-1):
     os.makedirs(os.path.dirname(f"{args.dest}/"), exist_ok=True)
     
     for f in os.listdir(args.source):
@@ -14,9 +14,9 @@ def main(args, full=False):
         fs_rate,track = wavfile.read(fullpath)
         length = int(len(track)/fs_rate)
         for iter in range(args.samples_per_track):
-            if full:
-                startpoint = 0
-                duration = length
+            if fraction > 0:
+                startpoint = random.randint(0,length-round(length*fraction))
+                duration = length*fraction
             else:
                 startpoint = random.randint(0,length-args.max_length)
                 duration = random.random()*(args.max_length-args.min_length)+args.min_length

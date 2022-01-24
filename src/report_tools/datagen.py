@@ -16,7 +16,7 @@ def main(args):
     random.seed(9317993391)
     compressors = [("gzip",gzip.compress), ("lzma",lzma.compress), ("bzip2",bz2.compress)]
     noises = [1, 0.5, 0.25, 0.1, 0.05, 0]
-    sizes = [1, 5, 10, 20, 30, "full"]
+    sizes = [1, 5, 10, 20, 30, "9/10", "full"]
     sourceDir = args.source
     dbDir = f"{args.compile_dest}/db"
     samplesDir = f"{args.compile_dest}/samples"
@@ -38,10 +38,10 @@ def main(args):
                         max_length = size,
                         samples_per_track = args.samples_per_track if size!="full" else 1,
                         noise = noise
-                    ),size=="full")
+                    ),1 if size=="full" else 9/10 if size=="9/10" else -1)
                 compile(argparse.Namespace(
                         source = samplesDir,
-                        dest = f"{samplesdbDir}/{size}/{noise}"
+                        dest = f"{samplesdbDir}/{str(size).replace('/','_')}/{noise}"
                     ),True,"./../GetMaxFreqs")
                 rmtree(samplesDir) # delete samples because they use too much storage
 
@@ -57,9 +57,9 @@ def main(args):
                     models[model.removesuffix(".freqs")] = tmpfile.read()
             for size in sizes:
                 for noise in noises:
-                    for target in os.listdir(f"{samplesdbDir}/{size}/{noise}"):
+                    for target in os.listdir(f"{samplesdbDir}/{str(size).replace('/','_')}/{noise}"):
                         targetName = target.removesuffix(".freqs").rstrip("1234567890")
-                        with open(f"{samplesdbDir}/{size}/{noise}/{target}", "rb") as targetFile:
+                        with open(f"{samplesdbDir}/{str(size).replace('/','_')}/{noise}/{target}", "rb") as targetFile:
                             targetBytes = targetFile.read()
                             for compressor in compressors:
                                 results = {}
