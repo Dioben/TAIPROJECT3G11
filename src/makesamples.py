@@ -10,7 +10,7 @@ def main(args, fraction=-1):
     
     for f in os.listdir(args.source):
         fullpath = f"{args.source}/{f}"
-        keyname = f.removesuffix(".wav").removesuffix(".flac")
+        keyname = f.removesuffix(".wav")
         fs_rate,track = wavfile.read(fullpath)
         length = int(len(track)/fs_rate)
         for iter in range(args.samples_per_track):
