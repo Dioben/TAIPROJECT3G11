@@ -1,10 +1,13 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication,QMainWindow, QTableWidgetItem, QFileDialog,QHeaderView
+from PyQt5.QtWidgets import QApplication,QMainWindow, QTableWidgetItem, QFileDialog,QHeaderView,QActionGroup
 import sys
 import os
 from commonutils import calculateDistance  
 import argparse
 import subprocess
+from gzip import compress as gc
+from lzma import compress as lc
+from bz2 import compress as bc
 
 class ConvertThread(QtCore.QThread): #worker that performs file comparison
     
@@ -35,7 +38,7 @@ class ConvertThread(QtCore.QThread): #worker that performs file comparison
             for keyname,modelbytes in self.db.items():
                 results.append( (keyname, calculateDistance(trans,modelbytes,self.compress) ))
                 counter+=1
-                prog = counter/totalfiles*100
+                prog = int(counter/totalfiles*100)
                 results  = sorted(results,key=lambda x: x[1])[:10]
                 self.progress.emit( {"percent":prog,"results":results} )
                 self.progress.emit({"title":f"Finished Processing {self.filename}"})
@@ -53,7 +56,7 @@ class ConvertThread(QtCore.QThread): #worker that performs file comparison
                 modelbytes = tmpfile.read()
             results.append( (keyname, calculateDistance(trans,modelbytes,self.compress) ))
             counter+=1
-            prog = counter/totalfiles*100
+            prog = int(counter/totalfiles*100)
             results  = sorted(results,key=lambda x: x[1])[:10]
             self.progress.emit( {"percent":prog,"results":results} )
             self.progress.emit({"title":f"Finished Processing {self.filename}"})
@@ -70,7 +73,7 @@ class Ui_MainWindow(object):
         # and afterwards call the closeEvent of the super-class
         super(QMainWindow, self).closeEvent(event)
         
-    def setupUi(self, MainWindow,comp,db,cache): #This function is automatically generated other than small segments for the most part it's fully ignorable
+    def setupUi(self, MainWindow,db,cache): #This function is automatically generated other than small segments for the most part it's fully ignorable
 
         #state management
         self.tempfilename = "./tempfile"
@@ -78,7 +81,7 @@ class Ui_MainWindow(object):
         while os.path.exists(f"{self.tempfilename}{tempfilenum}.freqs"):
             tempfilenum+=1
         self.tempfilename+=str(tempfilenum)+".freqs"
-        self.compress = comp
+        self.compress = gc
         self.db = db
         self.cache = cache
 
@@ -198,8 +201,44 @@ class Ui_MainWindow(object):
         self.submitbutton.clicked.connect(self.fileSelectPress)
         self.workThread = None
         
+        self.menubar = QtWidgets.QMenuBar(MainWindow)
+        self.menubar.setObjectName("menubar")
+        
+        actionComp = self.menubar.addMenu("Compressor")
+        self.actGroup = QActionGroup(actionComp) #group them into radio rather than checkbox
+
+        gzipcheck = actionComp.addAction("gzip")
+        self.actGroup.addAction(gzipcheck)
+        gzipcheck.setCheckable(True)
+        gzipcheck.setChecked(True)
+        gzipcheck.triggered.connect(lambda _: self.setCompress("gzip"))
+        
+        lzmacheck = actionComp.addAction("lzma")
+        self.actGroup.addAction(lzmacheck)
+        lzmacheck.setCheckable(True)
+        lzmacheck.setChecked(False)
+        lzmacheck.triggered.connect(lambda _: self.setCompress("lzma"))
+        
+        bzipcheck = actionComp.addAction("bzip2")
+        self.actGroup.addAction(bzipcheck)
+        bzipcheck.setCheckable(True)
+        bzipcheck.setChecked(False)
+        bzipcheck.triggered.connect(lambda _: self.setCompress("bzip"))
+
+        MainWindow.setMenuBar(self.menubar)
+        
         self.retranslateUi(MainWindow)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+
+    def setCompress(self,name):
+        if self.workThread:
+            self.cancelThread()
+        if name=="bzip":
+            self.compress = bc
+        elif name=="lzma":
+            self.compress = lc
+        elif name=="gzip":
+            self.compress = gc
 
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
@@ -272,6 +311,7 @@ class Ui_MainWindow(object):
         self.filename_label.setText("Processing Cancelled")
         self.workThread.quit()
         self.workThread.wait()
+        self.workThread = None
        
     def resetVisuals(self):
         self.progressBarContainer.setVisible(False)
@@ -294,9 +334,9 @@ class Ui_MainWindow(object):
 
 
 class MyApp(QtWidgets.QMainWindow, Ui_MainWindow):
-    def __init__(self, parent=None, comp=None, db = None, cache = None):
+    def __init__(self, parent=None, db = None, cache = None):
         super(MyApp, self).__init__(parent)
-        self.setupUi(self,comp,db,cache)
+        self.setupUi(self,db,cache)
 
 if __name__ == "__main__":
     parser= argparse.ArgumentParser()
@@ -304,21 +344,8 @@ if __name__ == "__main__":
     parser.set_defaults(mem=False)
     parser.add_argument("--cache", help="enable caching database", dest="mem",action="store_true")
     parser.add_argument("--no-cache", help="disable caching database, default state", dest="mem",action="store_false")
-    parser.set_defaults(algorithm="gzip")
-    parser.add_argument("--gzip",dest="algorithm",action="store_const",const="gzip")
-    parser.add_argument("--lzma",dest="algorithm",action="store_const",const="lzma")
-    parser.add_argument("--bzip2",dest="algorithm",action="store_const",const="bzip2")
     args = parser.parse_args()
 
-    if args.algorithm == "gzip":
-        from gzip import compress
-    elif args.algorithm =="lzma":
-        from lzma import compress
-    elif args.algorithm =="bzip2":
-        from bz2 import compress
-    else:
-        raise Exception("Unknown compression algorithm")
-    
     cache = None
     if args.mem:
         filelist = os.listdir(args.db)
@@ -332,6 +359,6 @@ if __name__ == "__main__":
                 cache[keyname] = modelbytes
 
     app = QApplication(sys.argv)
-    form = MyApp(comp=compress,db=args.db, cache= cache)
+    form = MyApp(db=args.db, cache= cache)
     form.show()
     sys.exit(app.exec_())
