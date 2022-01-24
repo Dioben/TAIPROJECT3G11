@@ -1,5 +1,5 @@
 from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtWidgets import QApplication,QMainWindow, QTableWidgetItem, QFileDialog
+from PyQt5.QtWidgets import QApplication,QMainWindow, QTableWidgetItem, QFileDialog,QHeaderView
 import sys
 import os
 from commonutils import calculateDistance  
@@ -193,6 +193,8 @@ class Ui_MainWindow(object):
         self.frame.dropEvent = lambda s: self.frameDropEvent(s)
         self.cancel.clicked.connect(self.cancelThread)
         self.tableWidget_2.setHorizontalHeaderLabels(["File","Distance"])
+        self.tableWidget_2.horizontalHeader().setSectionResizeMode(0, QHeaderView.Stretch)
+        self.tableWidget_2.horizontalHeader().setSectionResizeMode(1, QtWidgets.QHeaderView.ResizeToContents)
         self.submitbutton.clicked.connect(self.fileSelectPress)
         self.workThread = None
         
