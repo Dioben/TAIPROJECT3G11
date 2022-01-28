@@ -1,6 +1,6 @@
 # TAIPROJECT3G11
 
-A video about this project can be found [here](https://youtu.be/2EWLtXofw-s)
+A video about this project can be found [here](https://youtu.be/2EWLtXofw-s).
 
 ## How to run
 The project was implemented in python 3.9, the python3 interpreter, as well as the numpy extension are necessary to run all code.
@@ -57,8 +57,8 @@ python3 <file> <options>
 
 ## Running with options - examples
 ```bash
-python3 compile.py --source /songs --dest /sigs
-python3 makesamples.py --source /songs --dest /samples --min-length 8 --samples-per-track 15 --noise 0
-python3 finderg.py --db /sigs --sample /samples/sample.wav --lzma
-python3 finderUI.py  --db /sigs --cache
+python3 compile.py --source ./songs --dest ./sigs
+python3 makesamples.py --source ./songs --dest ./samples --min-length 8 --samples-per-track 15 --noise 0
+python3 finderg.py --db ./sigs --sample ./samples/sample.wav --lzma
+python3 finderUI.py  --db ./sigs --cache
 ```
